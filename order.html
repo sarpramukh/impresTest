@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Orders</title>
+	<meta http-equiv = "Content-Type" content = "text/html; charset = utf-8" />
+
+	<link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+
+	<style type="text/css">
+		.pageNumbers:hover{
+			background-color: yellow;
+		}
+	</style>
+</head>
+<body>
+	<script type = "text/javascript">
+        $(document).ready(function(){
+		  	$('[data-toggle="tooltip"]').tooltip();
+		});
+
+        //prefixes of implementation that we want to test
+        window.indexedDB = window.indexedDB || window.mozIndexedDB || 
+        window.webkitIndexedDB || window.msIndexedDB;
+         
+        //prefixes of window.IDB objects
+        window.IDBTransaction = window.IDBTransaction || 
+        window.webkitIDBTransaction || window.msIDBTransaction;
+        window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || 
+        window.msIDBKeyRange
+         
+        if (!window.indexedDB) {
+            window.alert("Your browser doesn't support a stable version of IndexedDB.")
+        }
+         
+        // Initialize database setup when browser load first time
+        document.addEventListener('DOMContentLoaded', init, false);
+        // function to intialize
+		function init() {
+			console.log('page init');
+			// call database setup
+			dbSetup();
+		}	
+
+		// show how many records on current page
+		var limit = 10;
+		var position = 0;
+		// how many page counts in pagination to show at a time on page
+		var pageCount = 2;
+
+		// function for database setup and open transaction
+		function dbSetup() {
+			var request = window.indexedDB.open("impresTestDB", 1);
+	         
+	        request.onerror = function(event) {
+	            console.log("error: ");
+	        };
+	         
+	        request.onsuccess = function(event) {
+	            db = request.result;
+	            console.log("success: "+ db);
+	            // fetch product id
+	            var product_id = getUrlParameter("p_id");
+	            // display products and orders
+				displayProductOrder(product_id,position);	
+				// show orders counts
+				doOrdersCount(product_id);
+	        };	        			
+		}
+		
+		// function to get url parameters
+		var getUrlParameter = function getUrlParameter(sParam) {
+		    var sPageURL = window.location.search.substring(1),
+		        sURLVariables = sPageURL.split('&'),
+		        sParameterName,
+		        i;
+
+		    for (i = 0; i < sURLVariables.length; i++) {
+		        sParameterName = sURLVariables[i].split('=');
+
+		        if (sParameterName[0] === sParam) {
+		            return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+		        }
+		    }
+		};
+        
+        // function to count orders
+        function doOrdersCount(product_id) {
+        	var orderTotal = 0;
+        	// open transaction for products store and get values
+        	var prodTransaction = db.transaction("products", "readwrite");
+        	var prodStore = prodTransaction.objectStore("products");
+        	var requestProd = prodStore.get(parseInt(product_id));
+
+			var hasSkipped = false;
+
+            requestProd.onsuccess = function(e) {
+			    var cursor = e.target.result;
+			    // if there is cursor available
+			    if(cursor){
+			    	// open transaction for orders store
+	               	var orderStore = db.transaction("orders").objectStore("orders");
+	               	orderStore.openCursor().onsuccess = function(event) {
+			            var cursorOrder = event.target.result;
+			            // if cursor for orders store available
+			            if (cursorOrder) {
+			            	// iterate through orders id saved into store with product data
+			            	cursor.reference.store_ids.forEach(function(sid){
+			            		// if order id in orders table matches products data
+		            			if(sid == cursorOrder.value.order_id){
+							        orderTotal++;			                  	
+				                }
+		                  	});
+		                  	cursorOrder.continue();
+		                  	
+		               	} else {
+		                  	//alert("No more entries!");
+		               	}
+		               	// display order total
+		               	$("#totalOrderCounts").html("<p>("+orderTotal+" orders Total)</p>");
+		               	// pagination
+		    			pagination(orderTotal,1);
+		        	};
+            	}            	
+		 	   	
+			};
+					 	
+		}
+
+		// display product and orders
+        function displayProductOrder(product_id,position) {
+        	var count = 1;
+        	// get orders list
+            getOrders(product_id,position).then(function(orders) {
+            	// start count based on position
+            	if(position > 0){
+            		count = (position+1);
+            	}else{
+            		count = 1;
+            	}
+            	// loop through all orders list and show as per page numbers
+            	for(var i=position;i<(position+limit);i++){
+            		// check order data is not undefined
+            		if(orders[i] != undefined){
+            			var actions = "<a onclick='o_remove("+orders[i].key+",\""+orders[i].order_id+"\")' style='cursor:pointer;' data-toggle='tooltip' title='Remove Order'><i class='fa fa-remove'></i></a>&nbsp;&nbsp;&nbsp;<a data-toggle='modal' data-target='#o_update_modal' onclick='openOrderUpdateModal("+orders[i].key+",\""+orders[i].order_id+"\")' style='cursor:pointer;' data-toggle='tooltip' title='Update Order'><i class='fa fa-plus'></i></a>";
+
+				    	$(".orderTable tbody").append('<tr><td>'+count+'</td><td>'+orders[i].order_id+'</td><td>'+orders[i].desc+'</td><td>'+actions+'</td></tr>');
+				    	count++;
+            		}            		
+            	}   
+        	});
+        }
+
+        // function to get orders
+        function getOrders(product_id,position){
+        	return new Promise(function(resolve, reject) {
+        		// open transaction for products store and get data
+	            var prodTransaction = db.transaction("products", "readwrite");
+            	var prodStore = prodTransaction.objectStore("products");
+            	var requestProd = prodStore.get(parseInt(product_id));
+            	// empty table beore loading data to it
+	            $(".orderTable tbody").empty();
+
+	            // intialize variables
+	            var orders = [];
+	            var hasSkipped = false;
+	            
+	            requestProd.onsuccess = function(e) {
+				    var cursor = e.target.result;
+				    // show product details
+				    var prodHTML = "<div class='col-md-12'> <p><b>Product Name : </b> "+cursor.name+"</p> <p><b>Product Description : </b> "+cursor.desc+"</p> </div>";
+				    $("#productDetails").html(prodHTML);
+
+				    // if product cursor available
+				    if(cursor){
+				    	// open transaction for orders store 
+		               	var orderStore = db.transaction("orders").objectStore("orders");
+		               	// open cursor for orders store
+		               	orderStore.openCursor().onsuccess = function(event) {
+				            var cursorOrder = event.target.result;
+
+				            // if orders store cursor available
+				            if (cursorOrder) {
+				            	// add value in orders array if matching order id found
+				            	cursor.reference.store_ids.forEach(function(sid){
+			            			if(sid == cursorOrder.value.order_id){
+								        cursorOrder.value.key = cursorOrder.key;
+					               		orders.push(cursorOrder.value);
+					               	}
+			                  	});
+				            	// continue till limit reached
+			                  	cursorOrder.continue();
+			                } else {
+			                  	//alert("No more entries!");
+			                  	resolve(orders);
+			               	}
+			        	};
+		        	}
+	               	
+				};
+            });
+        }
+         
+        // function for pagination
+        function pagination(total,currentPageNo){
+        	
+        	var paginationHTML='';
+        	// see if total is greater than limit then create pages
+        	if(total > limit){
+        		// calculate how many pages required
+        		var pages = Math.ceil(total / limit);
+        		var startPageNo = currentPageNo;
+        		// if no of pages higher than page counts to show on pagination
+        		if(pages > pageCount){
+        			// check no of counts on page is remain upto page count limited
+        			if((currentPageNo+pageCount) > pages){
+        				// assign start page number
+        				startPageNo = pages - pageCount;
+        				// if start page number is not first one then show first and prev button
+        				if(startPageNo != 1){
+	        				paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move(1,"+total+")'> First </a> ";
+	        				paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+(startPageNo-1)+","+total+")'> Prev </a> ";
+        				}
+        				// show page counters below
+		        		for(var i=startPageNo; i<= (pages); i++){
+		        			paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+i+","+total+")'> "+i+" </a> ";
+		        		}
+        			}else{
+        				// if start page number is not first one then show first and prev button
+        				if(currentPageNo != 1 ){
+        					paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move(1,"+total+")'> First </a> ";
+        					paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+(currentPageNo-1)+","+total+")'> Prev </a> ";
+        				}
+        				
+        				// show page counters below
+		        		for(var i=currentPageNo; i<= (pages-1) && i<=(currentPageNo+(pageCount-1)); i++){
+		        			paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+i+","+total+")'> "+i+" </a> ";
+		        		}
+		        		paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+pages+","+total+")'> Last </a> ";
+        			}
+        			
+        		}else{
+        			// show page counters below
+	        		for(var i=1; i<= pages; i++){
+	        			paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+i+","+total+")'> "+i+" </a> ";
+	        		}	
+        		}
+        		// show pagination to DOM
+        		$("#pagination").html(paginationHTML);
+        	}
+        }
+
+        // function when moving to pages
+        function move(pageNo,total){
+        	// fetch product id for url
+        	var product_id = getUrlParameter("p_id");
+        	pageNo = parseInt(pageNo);
+        	// show page number
+        	$("#showPageNo").html("<b>Page :</b> "+pageNo);
+        	// move cursor further as per pageNo
+        	position = 0;
+        	// now change position to page number selected
+        	position = (pageNo-1) * limit;
+        	// redisplay orders list
+        	displayProductOrder(product_id,position);
+        	// reconfigure pagination
+        	pagination(total,pageNo);
+        }
+
+        // function add new order
+        function add_order() {
+         	// get values
+         	var oa_id = $("#oa_id").val();
+         	var oa_desc = $("#oa_desc").val();
+         	var product_id = parseInt(getUrlParameter("p_id"));
+
+         	// open transaction for orders list and add item
+            var request = db.transaction(["orders"], "readwrite")
+            .objectStore("orders")
+            .add({ order_id: oa_id, desc: oa_desc});
+            
+            request.onsuccess = function(event) {
+            	// show message
+               	$("#p_msg").show();
+               	$("#p_msg").html('<b>Product has been added successfully.</b>');
+               	// reconfigure orders list
+               	displayProductOrder(product_id,position);
+               	// hide message after 3 seconds
+               	setTimeout(function(){
+               		$("#p_msg").html('');	
+               		$("#p_msg").hide();
+               	},3000);
+               	// hide modal and empty fields
+               	$("#p_name").val('');
+         		$("#p_desc").val('');
+         		$("p_add_modal").hide();
+         		// reconfigure orders store count
+         		doOrdersCount(product_id);
+            };
+            
+            // open transaction for products store and get data
+            var prodTransaction = db.transaction("products", "readwrite");
+            var prodStore = prodTransaction.objectStore("products");
+            var requestProd = prodStore.get(product_id);
+            
+            requestProd.onsuccess = function(e) {
+            	var data = e.target.result;
+			    // push order id to product reference store id array
+			    data.reference.store_ids.push(oa_id);
+			    // update products store
+			    var objRequest = prodStore.put(data,product_id);
+
+			    objRequest.onsuccess = function(e){
+			    	// show message
+	               	$("#po_msg").show();
+	               	$("#po_msg").html('<b>Order has been added to product successfully.</b>');
+	               	// hide message after 3 seconds
+	               	setTimeout(function(){
+	               		$("#po_msg").html('');	
+	               		$("#po_msg").hide();
+	               	},3000);
+	               	// hide modal and empty fields
+	               	$("#oa_id").val('');
+	         		$("#oa_desc").val('');
+	         		$("#o_add_modal").modal('toggle');
+         		};
+            };
+        }
+         
+        // function to remove order
+        function o_remove(o_key,o_id){
+        	//fetch product id from url
+        	var product_id = parseInt(getUrlParameter("p_id"));
+        	// open transaction for orders store and delete
+	        var request = db.transaction(["orders"], "readwrite")
+            .objectStore("orders")
+            .delete(parseInt(o_key));
+            
+            request.onsuccess = function(event) {
+            	// show message
+            	$("#po_msg").show();
+               	$("#po_msg").html('<b>Order has been removed successfully.</b>');
+               	// reconfigure orders list
+               	displayProductOrder(product_id,position);
+               	// hide message after 3 seconds
+               	setTimeout(function(){
+               		$("#po_msg").html('');	
+               		$("#po_msg").hide();
+               	},3000);
+            };
+
+            // open transaction for products store and get value
+            var prodTransaction = db.transaction("products", "readwrite");
+            var prodStore = prodTransaction.objectStore("products");
+            var requestProd = prodStore.get(product_id);
+            
+            requestProd.onsuccess = function(e) {
+            	var data = e.target.result;
+			    // get store ids array from reference object
+			    var arr = data.reference.store_ids;
+			    // remove order id from array
+			    var result = arr.filter(function(elem){
+				   return elem != o_id; 
+				});
+				// save remain ids into product reference store ids list
+			    data.reference.store_ids = result;
+
+			    // update products store
+			    var objRequest = prodStore.put(data,product_id);
+
+			    objRequest.onsuccess = function(e){
+	               	console.log('Order has been removed from product successfully.');
+	               	// reconfigure count
+	               	doOrdersCount(product_id);
+         		};
+            };
+	    };
+
+	    // when open order modal
+	    function openOrderUpdateModal(oid,oname,pid){
+	    	$("#showOrderID").text(oname);
+	    	$("#orderId").val(oid);
+	    }
+ 		
+ 		// function to update order
+	    function update_order() {
+         	// get values
+         	var o_id = parseInt($("#orderId").val());
+         	var o_desc = $("#o_desc").val();
+         	var product_id = getUrlParameter("p_id");
+
+         	// open transaction for orders list and get values
+            var orderTransaction = db.transaction("orders", "readwrite");
+            var orderStore = orderTransaction.objectStore("orders");
+            var requestorder = orderStore.get(o_id);
+            //console.log(o_id);
+
+            requestorder.onsuccess = function(e) {
+			    var data = e.target.result;
+			    // update description data [ Note : order id can't be change ]
+			    data.desc = o_desc;
+			    // update orders store
+			    var objRequest = orderStore.put(data,o_id);
+
+			    objRequest.onsuccess = function(e){
+			        // show message
+			        $("#po_msg").show();
+	               	$("#po_msg").html('<b>Order has been updated successfully.</b>');
+	               	// reconfigure orders list
+	               	displayProductOrder(product_id,position);
+	               	// hide message after 3 seconds
+	               	setTimeout(function(){
+	               		$("#po_msg").html('');	
+	               		$("#po_msg").hide();
+	               	},3000);
+	               	// hide modal and empty fields
+	               	$("#showOrderID").html('');
+	         		$("#o_desc").val('');
+	         		$("#o_update_modal").modal('toggle');
+			    };
+			}
+
+            
+         }
+
+      </script>
+
+      <!-- Container -->
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<!-- Show title -->
+				<h2 style="text-align: center;">Order List</h2>
+				<p class="col-md-12" id="po_msg" style="display: none;"></p>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-md-12">
+				<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#o_add_modal" data-toggle='tooltip' title='Add Order'>Add</button>
+				<span id="totalOrderCounts" style="float: right;"></span>
+			</div>
+			<!-- Show product details -->
+			<div class="col-md-12" id="productDetails">
+
+			</div>
+			<!-- Show orders list -->
+			<div class="col-md-12">
+				<table class="table table-borderd table-striped orderTable">
+					<thead>
+						<th>No</th>
+						<th>Order ID</th>
+						<th>Desc</th>						
+						<th>Action</th>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<!-- show pagination -->
+		<div class="row">
+			<div class="col-md-8" id="pagination"></div>
+			<div class="col-md-4">
+				<span style="float: right;text-align: right;" id="showPageNo"></span>
+			</div>
+		</div>
+
+		<!-- Order add modal -->
+		<div class="modal fade" id="o_add_modal" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel" aria-hidden="true">
+		  	<div class="modal-dialog" role="document">
+		    	<div class="modal-content">
+		      		<div class="modal-header">
+		        		<h5 class="modal-title" id="exampleModalLabel">Add Order </h5>
+			        	<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			          		<span aria-hidden="true">&times;</span>
+			        	</button>
+		      		</div>
+			      	<div class="modal-body">
+			      		<input type="hidden" name="orderId" id="orderId">
+			      		<div class="row">
+			      			<div class="form-group col-md-12">
+			      				<label class="col-md-4" style="float: left;">Order ID</label>
+			      				<input type="text" name="oa_id" id="oa_id" class="form-control col-md-8">
+			      			</div>
+			      		</div>
+			      		<div class="row">
+			      			<div class="form-group col-md-12">
+			      				<label class="col-md-4" style="float: left;">Description</label>
+			      				<input type="text" name="oa_desc" id="oa_desc" class="form-control col-md-8">
+			      			</div>
+			      		</div>
+			      	</div>
+			      	<div class="modal-footer">
+			        	<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			        	<button type="button" class="btn btn-primary" onclick="add_order()">Add</button>
+			      	</div>
+		    	</div>
+		  	</div>
+		</div>
+
+		<!-- Order update modal -->
+		<div class="modal fade" id="o_update_modal" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel" aria-hidden="true">
+		  	<div class="modal-dialog" role="document">
+		    	<div class="modal-content">
+		      		<div class="modal-header">
+		        		<h5 class="modal-title" id="exampleModalLabel">Update Order no <span id="showOrderID"></span></h5>
+			        	<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			          		<span aria-hidden="true">&times;</span>
+			        	</button>
+		      		</div>
+			      	<div class="modal-body">
+			      		<input type="hidden" name="orderId" id="orderId">
+			      		<div class="row">
+			      			<div class="form-group col-md-12">
+			      				<label class="col-md-4" style="float: left;">Description</label>
+			      				<input type="text" name="o_desc" id="o_desc" class="form-control col-md-8">
+			      			</div>
+			      		</div>
+			      	</div>
+			      	<div class="modal-footer">
+			        	<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			        	<button type="button" class="btn btn-primary" onclick="update_order()">Add</button>
+			      	</div>
+		    	</div>
+		  	</div>
+		</div>
+
+	</div>
+</body>
+</html>

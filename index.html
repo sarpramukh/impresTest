@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Products</title>
+	<meta http-equiv = "Content-Type" content = "text/html; charset = utf-8" />
+
+	<link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+
+	<style type="text/css">
+		.pageNumbers:hover{
+			background-color: yellow;
+		}
+	</style>
+</head>
+<body>
+	<script type = "text/javascript">
+        $(document).ready(function(){
+		  	$('[data-toggle="tooltip"]').tooltip();
+		}); 
+
+        //prefixes of implementation that we want to test
+        window.indexedDB = window.indexedDB || window.mozIndexedDB || 
+        window.webkitIndexedDB || window.msIndexedDB;
+         
+        //prefixes of window.IDB objects
+        window.IDBTransaction = window.IDBTransaction || 
+        window.webkitIDBTransaction || window.msIDBTransaction;
+        window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || 
+        window.msIDBKeyRange
+         
+        if (!window.indexedDB) {
+            window.alert("Your browser doesn't support a stable version of IndexedDB.")
+        }
+		
+		//Initialize database when page first load in browser         
+        document.addEventListener('DOMContentLoaded', init, false);
+        // Initialization function
+		function init() {
+			console.log('page init');
+			//database setup	
+			dbSetup();	
+		}
+
+		// Table data
+		const products = [
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010017','010019']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010015','010018','010012']}},
+			{name:'Laptop',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010001','010002','010003','010004','010005','010006','010007','010008','010009','010010','010011','010012','010013','010014','010016']}},
+			{name:'Smarphones',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010003','010005']}},
+			{name:'Tablets',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010007','010006']}},
+			{name:'Microwave',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'Fans',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Refrigerator',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'HDML cables',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Chocolate',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'Buiscuits',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}},
+			{name:'TV',desc:'24\' Samsung TV', reference:{store:'orders',store_ids:['010014','010006']}},
+			{name:'Speakers',desc:'Boss Speakers', reference:{store:'orders',store_ids:['010010','010013']}}
+		];
+
+		const orders = [
+			{order_id:'010001',desc:'sent to somewhere 1'},
+			{order_id:'010002',desc:'sent to somewhere 2'},
+			{order_id:'010003',desc:'sent to somewhere 3'},
+			{order_id:'010004',desc:'sent to somewhere 4'},
+			{order_id:'010005',desc:'sent to somewherer 5'},
+			{order_id:'010006',desc:'sent to somewhere 6'},
+			{order_id:'010007',desc:'sent to somewhere 7'},
+			{order_id:'010008',desc:'sent to somewhere 8'},
+			{order_id:'010009',desc:'sent to somewherer 9'},
+			{order_id:'010010',desc:'sent to somewhere 10'},
+			{order_id:'010011',desc:'sent to somewhere 11'},
+			{order_id:'010012',desc:'sent to somewhere 12'},
+			{order_id:'010013',desc:'sent to somewherer 13'},
+			{order_id:'010014',desc:'sent to somewhere 14'},
+			{order_id:'010015',desc:'sent to somewhere 15'},
+			{order_id:'010016',desc:'sent to somewherer 16'},
+			{order_id:'010017',desc:'sent to somewhere 17'},
+			{order_id:'010018',desc:'sent to somewhere 18'},
+			{order_id:'010019',desc:'sent to somewherer 19'}
+		];
+
+		// show how many records on current page
+		var limit = 10;
+		var position = 0;
+		// how many page counts in pagination to show at a time on page
+		var pageCount = 4;
+
+		// Database setup function
+		function dbSetup() {
+				//Create database
+				var request = window.indexedDB.open("impresTestDB", 1);
+		         
+		        request.onerror = function(event) {
+		            console.log("error: ");
+		        };
+		         
+		        request.onsuccess = function(event) {
+		            db = request.result;
+		            console.log("success: "+ db);
+		           	// display product list
+		            displayProducts(position);
+		            // shows how many products available
+		            doProductsCount();
+		            					
+		        };
+
+		        // Insert table data into table
+		        request.onupgradeneeded = function(event) {
+		            var db = event.target.result;
+		            // create products store
+		            var objectStore = db.createObjectStore("products", {autoIncrement: true});
+		            // insert data into products store
+		            for (var i in products) {
+		               objectStore.add(products[i]);
+		            }
+
+		            // create orders store
+		            var objectStore = db.createObjectStore("orders", {autoIncrement: true});
+		            // insert data into orders store
+		            for (var i in orders) {
+		               objectStore.add(orders[i]);
+		            }
+
+		        }		        
+			
+		}
+		
+		// count products and do pagination
+        function doProductsCount() {
+        	var prodTotal;
+
+		 	db.transaction(["products"],"readonly").objectStore("products").count().onsuccess = function(event) {
+		    	prodTotal = event.target.result;
+		    	// display products count
+		    	$("#totalProductCounts").html("<p>("+prodTotal+" products Total)</p>");
+		    	// show pagination
+		    	pagination(prodTotal,1);
+		    };		 	
+		}
+
+		// display products list
+        function displayProducts(position) {
+        	var count = 1;
+        	// get products data
+        	getProducts(position).then(function(products) {
+        		// start count based on position
+            	if(position > 0){
+            		count = (position+1);
+            	}else{
+            		count = 1;
+            	}
+        		// iterate each product and show it in table
+        		products.forEach(function(data){
+        			var actions = "<a onclick='p_remove("+data.key+")' style='cursor:pointer;' data-toggle='tooltip' title='Remove Product'><i class='fa fa-remove'></i></a>&nbsp;&nbsp;&nbsp;<a data-toggle='modal' data-target='#o_add_modal' onclick='openOrderModal("+data.key+",\""+data.name+"\")' style='cursor:pointer;' data-toggle='tooltip' title='Add order'><i class='fa fa-plus'></i></a>&nbsp;&nbsp;&nbsp;<a data-toggle='modal' data-target='#p_update_modal' onclick='openUpdateModal("+data.key+",\""+data.name+"\")' style='cursor:pointer;' data-toggle='tooltip' title='Update Product'><i class='fa fa-exchange'></i></a>";
+
+        			// append each row in table
+                  	$(".productsTable tbody").append('<tr><td>'+count+'</td><td><a href="order.html?p_id='+data.key+'" target="_blank" data-toggle="tooltip" title="Open Order List">'+data.name+'</a></td><td>'+data.desc+'</td><td>'+actions+'</td></tr>');
+                  	count++;
+        		});
+        	});
+        }
+
+        // function to get products
+        function getProducts(position){
+        	return new Promise(function(resolve, reject) {
+
+        	console.log("start "+position+" total "+limit);
+            // open transaction for products store
+            var t = db.transaction(['products'],'readonly');
+			var objectStore = t.objectStore('products');
+			// empty table before loading data in it
+            $(".productsTable tbody").empty();
+
+            // initialize variables
+            var products = [];
+            var hasSkipped = false;
+
+            // open cursor through store
+            objectStore.openCursor().onsuccess = function(event) {
+               	var cursor = event.target.result;
+               	
+               	// if cursor position not at 0 then advance it to assigned position
+               	if(!hasSkipped &&  position > 0){
+               		hasSkipped = true;
+               		console.log(position);
+               		cursor.advance(position);
+               		return;
+               	}
+
+               	// if cursor available
+               	if (cursor) {
+               		// insert key into cursor value object
+               		cursor.value.key = cursor.key;
+               		// push cusor value object into products array
+               		products.push(cursor.value);
+        			
+        			// iterate cursor until products array length upto assigned limit
+                  	if(products.length < limit){
+                  		cursor.continue();
+                  	}else{
+                  		resolve(products);
+                  	}
+                  
+               	} else {
+                  	//alert("No more entries!");
+                  	resolve(products);
+               	}
+            };
+            });
+        }
+
+        // Function for pagination
+        function pagination(total,currentPageNo){
+        	
+        	var paginationHTML='';
+        	// see if total is greater than limit then create pages
+        	if(total > limit){
+        		// calculate how many pages required
+        		var pages = Math.ceil(total / limit);
+        		var startPageNo = currentPageNo;
+        		// if no of pages higher than page counts to show on pagination
+        		if(pages > pageCount){
+        			// check no of counts on page is remain upto page count limited
+        			if((currentPageNo+pageCount) >= pages){
+        				startPageNo = pages - pageCount;
+        				// Show first and prev button
+        				paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move(1,"+total+")'> First </a> ";
+        				paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+(startPageNo-2)+","+total+")'> Prev </a> ";;
+        				// show page counters below
+		        		for(var i=startPageNo; i<= (pages); i++){
+		        			paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+i+","+total+")'> "+i+" </a> ";
+		        		}
+        			}else{
+        				// if current page number not first one
+        				if(currentPageNo != 1 ){
+        					// show first and prev button
+        					paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move(1,"+total+")'> First </a> ";
+        					paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+(currentPageNo-1)+","+total+")'> Prev </a> ";
+        				}
+        				
+        				// show page counters below
+		        		for(var i=currentPageNo; i<= (pages-1) && i<=(currentPageNo+(pageCount-1)); i++){
+		        			paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+i+","+total+")'> "+i+" </a> ";
+		        		}
+		        		paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+pages+","+total+")'> Last </a> ";
+        			}
+        			
+        		}else{
+        			// show page counters below
+	        		for(var i=1; i<= pages; i++){
+	        			paginationHTML += "<a style='padding:5px;border:1px solid;margin:2px;cursor:pointer;' class='pageNumbers' onclick='move("+i+","+total+")'> "+i+" </a> ";
+	        		}	
+        		}
+        		// Show pagination to DOM
+        		$("#pagination").html(paginationHTML);
+        	}
+        }
+
+        // function for moving pages
+        function move(pageNo,total){
+        	pageNo = parseInt(pageNo);
+        	// show page number
+        	$("#showPageNo").html("<b>Page :</b> "+pageNo);
+        	// move cursor further as per pageNo
+        	position = 0;
+        	// now change position to page number selected
+        	position = (pageNo-1) * limit;
+        	// display products list
+        	displayProducts(position);
+        	// reconfigure pagination
+        	pagination(total,pageNo);
+        }
+        
+        // function to add products
+        function add_products() {
+         	// get values
+         	var p_name = $("#p_name").val();
+         	var p_desc = $("#p_desc").val();
+
+         	// open transaction for products store and add value
+            var request = db.transaction(["products"], "readwrite")
+            .objectStore("products")
+            .add({ name: p_name, desc: p_desc ,reference:{store:'orders',store_ids:[]} });
+            
+            // if transaction success
+            request.onsuccess = function(event) {
+            	// Show message
+               $("#p_msg").show();
+               	$("#p_msg").html('<b>Product has been added successfully.</b>');
+               	// reconfigure display products list
+               	displayProducts(position);
+               	// hide message after 3 seconds
+               	setTimeout(function(){
+               		$("#p_msg").html('');	
+               		$("#p_msg").hide();
+               	},3000);
+               	// hide modal and empty field
+               	$("#p_name").val('');
+         		$("#p_desc").val('');
+         		$("#p_add_modal").modal('toggle');
+         		// reconfigure counts
+         		doProductsCount();
+            };
+            
+            request.onerror = function(event) {
+               //alert("Unable to add data\r\nKenny is aready exist in your database! ");
+            }
+        }
+
+        // when open product update modal
+	    function openUpdateModal(pid,pname){
+	    	$("#showProdName").text(pname);
+	    	$("#productId").val(pid);
+	    }
+
+	    // function to update products
+        function update_products(){
+        	// get values
+        	var p_name = $("#pu_name").val();
+         	var p_desc = $("#pu_desc").val();
+         	var p_id = parseInt($("#productId").val());
+
+         	// open transaction for products store
+         	var prodTransaction = db.transaction("products", "readwrite");
+            var prodStore = prodTransaction.objectStore("products");
+            var requestProd = prodStore.get(p_id);
+            
+            requestProd.onsuccess = function(e) {
+			    var data = e.target.result;
+			    
+			    if(p_name != ''){
+			    	data.name = p_name;
+			    }
+			    if(p_desc != ''){
+			    	data.desc = p_desc;	
+			    }			    
+
+			    // Update product store
+			    var objRequest = prodStore.put(data,p_id);
+
+			    objRequest.onsuccess = function(e){
+			        // show message
+			        $("#p_msg").show();
+	               	$("#p_msg").html('<b>Product has been updated successfully.</b>');
+	               	// update products list
+	               	displayProducts();
+	               	// hide message after 3 seconds
+	               	setTimeout(function(){
+	               		$("#p_msg").html('');	
+	               		$("#p_msg").hide();
+	               	},3000);
+	               	// hide modal and empty fields
+	               	$("#pu_name").val('');
+	               	$("#pu_desc").val('');
+	               	$("#showProdName").text('');
+	               	$("#productId").val('')
+	               	$("#p_update_modal").modal('toggle');
+			    };
+			}
+        }
+         
+        // function to remove product
+        function p_remove(id){
+        	// open transaction for products store and delete item
+	        var request = db.transaction(["products"], "readwrite")
+            .objectStore("products")
+            .delete(id);
+            
+            request.onsuccess = function(event) {
+            	// show messages
+            	$("#p_msg").show();
+               	$("#p_msg").html('<b>Product has been removed successfully.</b>');
+               	// update products list
+               	displayProducts();
+               	// hide message after 3 seconds
+               	setTimeout(function(){
+               		$("#p_msg").html('');	
+               		$("#p_msg").hide();
+               	},3000);
+               	// reconfigure counts
+               	doProductsCount();
+            };
+	    };
+
+	    // when open order modal
+	    function openOrderModal(pid,pname){
+	    	//console.log(pname);
+	    	$("#showProdName").html(pname);
+	    	$("#productId").val(pid);
+	    }
+ 		
+ 		// function to add order
+	    function add_order() {
+         	// get values
+         	var o_id = $("#o_id").val();
+         	var o_desc = $("#o_desc").val();
+         	var pid = parseInt($("#productId").val());
+
+         	// open transaction for orders store and add item
+            var request = db.transaction(["orders"], "readwrite")
+            .objectStore("orders")
+            .add({ order_id: o_id, desc: o_desc});
+
+            // open transaction for products store and get data
+            var prodTransaction = db.transaction("products", "readwrite");
+            var prodStore = prodTransaction.objectStore("products");
+            var requestProd = prodStore.get(pid);
+            
+            requestProd.onsuccess = function(e) {
+            	var data = e.target.result;
+			    
+			    data.reference.store_ids.push(o_id);
+			    // update data
+			    var objRequest = prodStore.put(data,pid);
+
+			    objRequest.onsuccess = function(e){
+			        console.log('Success in updating record');
+			    };
+			}
+
+            request.onsuccess = function(event) {
+            	// show message
+                $("#p_msg").show();
+               	$("#p_msg").html('<b>Order has been added successfully.</b>');
+               	// display products list
+               	displayProducts(position);
+               	//hide message after 3 seconds
+               	setTimeout(function(){
+               		$("#p_msg").html('');	
+               		$("#p_msg").hide();
+               	},3000);
+               	// hide modal and empty fields
+               	$("#o_id").val('');
+         		$("#o_desc").val('');
+         		$("#o_add_modal").modal('toggle');
+            };
+            
+            request.onerror = function(event) {
+               //alert("Unable to add data\r\nKenny is aready exist in your database! ");
+            }
+         }
+
+      </script>
+
+      <!-- Container -->
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<!-- Show title -->
+				<h2 style="text-align: center;">Products List</h2>
+				<p class="col-md-12" id="p_msg" style="display: none;"></p>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-md-12">
+				<button type="button" class="btn btn-primary mb-2" data-toggle="modal" data-target="#p_add_modal" data-toggle="tooltip" title="Add Product">Add</button>
+				<span id="totalProductCounts" style="float: right;"></span>
+			</div>
+			<!-- Table -->
+			<div class="col-md-12">
+				<table class="table table-borderd table-striped productsTable">
+					<thead>
+						<th>No</th>
+						<th>Name</th>
+						<th>Desc</th>						
+						<th>Action</th>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<!-- Pagination -->
+		<div class="row">
+			<div class="col-md-8" id="pagination"></div>
+			<div class="col-md-4">
+				<span style="float: right;text-align: right;" id="showPageNo"></span>
+			</div>
+		</div>
+
+		<!-- Product add modal -->
+		<div class="modal fade" id="p_add_modal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel" aria-hidden="true">
+		  	<div class="modal-dialog" role="document">
+		    	<div class="modal-content">
+		      		<div class="modal-header">
+		        		<h5 class="modal-title" id="exampleModalLabel">Add Products</h5>
+			        	<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			          		<span aria-hidden="true">&times;</span>
+			        	</button>
+		      		</div>
+			      	<div class="modal-body">
+			      		<div class="row">
+			      			<div class="form-group col-md-12">
+			      				<label class="col-md-4" style="float: left;">Name</label>
+			      				<input type="text" name="p_name" id="p_name" class="form-control col-md-8">
+			      			</div>
+			      		</div>
+			      		<div class="row">
+			      			<div class="form-group col-md-12">
+			      				<label class="col-md-4" style="float: left;">Description</label>
+			      				<input type="text" name="p_desc" id="p_desc" class="form-control col-md-8">
+			      			</div>
+			      		</div>
+			      	</div>
+			      	<div class="modal-footer">
+			        	<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			        	<button type="button" class="btn btn-primary" onclick="add_products()">Add</button>
+			      	</div>
+		    	</div>
+		  	</div>
+		</div>
+
+		<!-- Product update modal -->
+		<div class="modal fade" id="p_update_modal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel" aria-hidden="true">
+		  	<div class="modal-dialog" role="document">
+		    	<div class="modal-content">
+		      		<div class="modal-header">
+		        		<h5 class="modal-title" id="exampleModalLabel">Update Product <span id="showProdName"></span></h5>
+			        	<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			          		<span aria-hidden="true">&times;</span>
+			        	</button>
+		      		</div>
+			      	<div class="modal-body">
+			      		<input type="hidden" name="productId" id="productId">
+			      		<div class="row">
+			      			<div class="form-group col-md-12">
+			      				<label class="col-md-4" style="float: left;">Name</label>
+			      				<input type="text" name="pu_name" id="pu_name" class="form-control col-md-8">
+			      			</div>
+			      		</div>
+			      		<div class="row">
+			      			<div class="form-group col-md-12">
+			      				<label class="col-md-4" style="float: left;">Description</label>
+			      				<input type="text" name="pu_desc" id="pu_desc" class="form-control col-md-8">
+			      			</div>
+			      		</div>
+			      	</div>
+			      	<div class="modal-footer">
+			        	<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			        	<button type="button" class="btn btn-primary" onclick="update_products()">Add</button>
+			      	</div>
+		    	</div>
+		  	</div>
+		</div>
+
+		<!-- Order add modal -->
+		<div class="modal fade" id="o_add_modal" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel" aria-hidden="true">
+		  	<div class="modal-dialog" role="document">
+		    	<div class="modal-content">
+		      		<div class="modal-header">
+		        		<h5 class="modal-title" id="exampleModalLabel">Add Order to product <span id="showProdName"></span></h5>
+			        	<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			          		<span aria-hidden="true">&times;</span>
+			        	</button>
+		      		</div>
+			      	<div class="modal-body">
+			      		<input type="hidden" name="productId" id="productId">
+			      		<div class="row">
+			      			<div class="form-group col-md-12">
+			      				<label class="col-md-4" style="float: left;">Order ID</label>
+			      				<input type="text" name="o_id" id="o_id" class="form-control col-md-8">
+			      			</div>
+			      		</div>
+			      		<div class="row">
+			      			<div class="form-group col-md-12">
+			      				<label class="col-md-4" style="float: left;">Description</label>
+			      				<input type="text" name="o_desc" id="o_desc" class="form-control col-md-8">
+			      			</div>
+			      		</div>
+			      	</div>
+			      	<div class="modal-footer">
+			        	<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			        	<button type="button" class="btn btn-primary" onclick="add_order()">Add</button>
+			      	</div>
+		    	</div>
+		  	</div>
+		</div>
+
+	</div>
+</body>
+</html>
